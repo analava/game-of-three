@@ -187,4 +187,5 @@ localhost:3000/api/v1/player
 | ------ | ------ | ------ |
 | name * | String | The name of the player|
 | kind * | String | The kind of player, either 'HUMAN' or 'MACHINE'|
+
 This request could be useful in MULTI-PLAYER games, for creating a player which is not starting the game, but is playing as the second player.
