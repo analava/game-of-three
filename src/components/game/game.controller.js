@@ -3,6 +3,7 @@ const Game = require('./game.model');
 const playerController = require('../player/player.controller');
 const { random, choiceRange } = require('../../utils/random');
 const redisClient = require('../../config/redis');
+const APIError = require('../../utils/APIError');
 
 exports.startGame = async(gameKind, playerName, initial_number, nextPlayer, goal) => {
         const players = [];
@@ -57,7 +58,7 @@ exports.handleTurnAndDoTheMove = async(game_id, player_id, moveNumber) => {
     ]);
     
     if (game[0].nextPlayer._id.toString() != player_id.toString()) {
-        throw new Error('Invalid turn');
+        throw new APIError({message:'Invalid turn', status: 403});
     } else {
         if (!moveNumber && moveNumber != 0) {
             choiceRange(game[0].goal).map((item) => {
@@ -87,21 +88,21 @@ exports.move = async(game_id, player_id, moveNumber) => {
     const game = await Game.findById(game_id);
 
     if (!game) {
-        throw new Error('Invalid Game'); // fix status
+        throw new APIError({message:'Invalid Game', status: 400});
     }
 
     if (player_id.toString() != game.nextPlayer) {
-        throw new Error('It is not your turn!'); // fix status
+        throw new APIError({message:'It is not your turn!', status: 403});
     }
 
     const validChoiceRange = choiceRange(game.goal);
     if (validChoiceRange.indexOf(moveNumber) == -1) {
-        throw new Error('Invalid choice number'); // fix status
+        throw new APIError({message:'Invalid choice number', status: 400});
     }
 
     let newNumber = game.currentNumber + moveNumber;
     if (newNumber % game.goal != 0) {
-        throw new Error('Not correctly divisable by goal'); // fix status
+        throw new APIError({message:'Not correctly divisable by goal', status: 400});
     } else {
         const currentNumber = newNumber / game.goal;
         game.currentNumber = currentNumber;
@@ -145,7 +146,7 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
     }
     const addedPlayers = await Promise.all(addPlayers);
     if(!addedPlayers[1]){
-        throw new Error('The player does not exist!');
+        throw new APIError({message:'The player does not exist!', status: 400});
     }
     return addedPlayers;
 }
