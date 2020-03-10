@@ -9,3 +9,8 @@ exports.createPlayer = async(player) => {
 exports.findById = async(id) => {
     return await Player.findById(id);
 }
+
+exports.getPlayer = async(identifier) => {
+    const query = mongoose.Types.ObjectId.isValid(identifier) ? { $or: [{ _id: identifier }, { name: identifier }] } : { name: identifier };
+    return await Player.findOne(query);
+}
