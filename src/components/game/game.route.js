@@ -1,8 +1,9 @@
 const express = require('express');
 const validate = require('express-validation');
-const gameController = require('./game.controller');
 const { newGame } = require('./game.validation');
+const gameController = require('./game.controller');
 
+const authorization = require('../../utils/authorization');
 
 const router = express.Router();
 
@@ -12,5 +13,14 @@ router.route('/')
         res.json({ data: game });
     });
 
+router.route('/:id')
+    .put(authorization(), async(req, res) => {
+        const game = await gameController.handleTurnAndDoTheMove(req.params.id, req.user._id, req.body.moveNumber);
+        res.json({ data: game });
+    })
+    .get(async(req, res) => {
+        const game = await gameController.getGame(req.params.id);
+        res.json({ data: game });
+    })
 
 module.exports = router;
