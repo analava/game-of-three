@@ -1,0 +1,55 @@
+version: '3.5'
+
+services:
+
+  # Databases # #
+  redis-service:
+    container_name: redis-service
+    image: redis
+    ports:
+      - 6389:6379
+    volumes:
+      - redisdata:/data/db
+    networks:
+      - backend
+      
+  mongo-service:
+    container_name: mongo-service
+    image: mongo:4.0
+    ports:
+      - 27018:27017
+    volumes:
+      - mongodata1:/data/db
+    networks:
+      - backend
+  
+
+
+  # # Main Service ##
+  game-service:
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    image: game-service:latest
+    container_name: game-service
+    depends_on:
+        - mongo-service
+        - redis-service
+    ports:
+      - 3000:3000
+    networks:
+        - backend
+    env_file:
+      - .env
+    restart: always
+
+
+
+networks:
+  backend:
+
+volumes:
+  mongodata1:
+    driver: local
+  redisdata:
+    driver: local
