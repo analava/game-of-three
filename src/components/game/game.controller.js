@@ -111,6 +111,10 @@ exports.move = async(game_id, player_id, moveNumber) => {
     }
 }
 
+exports.getGame = async(game_id)=>{
+    return formatResponse(JSON.parse(await redisClient.redisGet(game_id.toString())));
+}
+
 async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
     let addPlayers;
     switch (gameKind) {
@@ -124,7 +128,10 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
             break;
             case 'MULTI-PLAYER':
             {
-              
+                addPlayers = [
+                    playerController.createPlayer({ name: playerName, kind: 'HUMAN' }),
+                    playerController.getPlayer(nextPlayer)
+                ];
             }
             break;
         case 'AUTOMATIC':
