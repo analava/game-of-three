@@ -3,12 +3,12 @@
 A game with two independent units – the players – communicating with each other using an API.
 # Description
 When a player starts, it incepts a random (whole) number and sends it to the second player as an approach of starting the game.
-The receiving player can now always choose between adding one of {-1, 0, 1}to get
+The receiving player can now always choose between adding one of {-1, 0, 1} to get
 to a number that is divisible by 3. Divide it by three. The resulting whole number is then sent back to the original sender.
 The same rules are applied until one player reaches the number 1 (after the division).
 Both players should be able to play automatically without user input. One of the players should optionally be adjustable by a user.
 # Setup
-To setup the environment you need to have docker and docker-compose installed.
+To setup the environment you need to have `docker` and `docker-compose` installed.
 Then you are able to run the program with the command:
 ```
 docker-compose -f Docker-compose.yml up -d
@@ -28,8 +28,8 @@ localhost:3000/api/v1/game
 | Parameter | type | Description |
 | ------ | ------ | ------ |
 | playerName | String| The name of the player who starts the game (In case it is a human) |
-| kind * | String| The kind of game which is going to be started: ('AUTOMATIC','SINGLE-PLAYER' or 'MULTI-PLAYER') |
-| initialNumber | Number| The number which the first player starts the game with. if no number is initiated, a random number between 50 to 100 is generated |
+| kind * | String| The kind of game which is going to be started: (`AUTOMATIC`, `SINGLE-PLAYER` or `MULTI-PLAYER`) |
+| initialNumber | Number| The number which the first player starts the game with. If no number is initiated, a random number between 50 to 100 is generated |
 | nextPlayer | String| The name or id of the player who the current player wants to play with (In case of MULTI-PLAYER games) |
 | goal | Number | The number which the numbers are divided by. The default goal is 3. |
 
@@ -186,6 +186,6 @@ localhost:3000/api/v1/player
 | Parameter | type | Description |
 | ------ | ------ | ------ |
 | name * | String | The name of the player|
-| kind * | String | The kind of player, either 'HUMAN' or 'MACHINE'|
+| kind * | String | The kind of player, either `HUMAN` or `MACHINE`|
 
 This request could be useful in MULTI-PLAYER games, for creating a player which is not starting the game, but is playing as the second player.
