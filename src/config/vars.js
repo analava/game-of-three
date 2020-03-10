@@ -10,5 +10,7 @@ module.exports = {
         port: process.env.REDIS_PORT
     },
     logs: process.env.NODE_ENV === 'production' ? 'combined' : 'dev',
-    DEFAULT_GAME_GOAL: 3
+    DEFAULT_GAME_GOAL: 3,
+    RANDOM_INITIAL_NUMBER_START: 50,
+    RANDOM_INITIAL_NUMBER_END: 100,
 };
