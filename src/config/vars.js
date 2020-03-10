@@ -9,5 +9,6 @@ module.exports = {
         host: process.env.REDIS_HOST,
         port: process.env.REDIS_PORT
     },
-    logs: process.env.NODE_ENV === 'production' ? 'combined' : 'dev'
+    logs: process.env.NODE_ENV === 'production' ? 'combined' : 'dev',
+    DEFAULT_GAME_GOAL: 3
 };
