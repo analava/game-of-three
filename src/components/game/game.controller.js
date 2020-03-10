@@ -24,7 +24,10 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
     switch (gameKind) {
         case 'SINGLE-PLAYER':
             {
-
+                addPlayers = [
+                    playerController.createPlayer({ name: playerName, kind: 'HUMAN' }),
+                    playerController.createPlayer({ kind: 'MACHINE' })
+                ];
             }
             break;
         case 'MULTI-PLAYER':
