@@ -19,6 +19,44 @@ exports.startGame = async(gameKind, playerName, initial_number, nextPlayer, goal
 };
 
 
+
+exports.handleTurnAndDoTheMove = async(game_id, player_id, moveNumber) => {
+
+    const game = await Game.aggregate([{
+            $match: { _id: mongoose.Types.ObjectId(game_id) }
+        },
+        {
+            $lookup: {
+                from: 'players',
+                localField: 'nextPlayer',
+                foreignField: '_id',
+                as: 'nextPlayer'
+            }
+        },
+        { $unwind: { path: '$nextPlayer' } }
+    ]);
+
+    if (game[0].nextPlayer._id.toString() != player_id.toString()) {
+        throw new Error('Invalid turn');
+    } else {
+        if (!moveNumber && moveNumber != 0) {
+            choiceRange(game[0].goal).map((item) => {
+                if ((game[0].currentNumber + item) % game[0].goal == 0) {
+                    moveNumber = item;
+                }
+            });
+        }
+        const movedGame = await this.move(game_id, player_id, moveNumber);
+
+        // check if nextPlayer is human or machine. if it is machine, call this function with the new player
+        const nextPlayer = await playerController.findById(movedGame.nextPlayer);
+        if (nextPlayer.kind == 'MACHINE') {
+            await this.handleTurnAndDoTheMove(game_id, movedGame.nextPlayer);
+        }
+        return;
+    }
+}
+
 exports.move = async(game_id, player_id, moveNumber) => {
     const game = await Game.findById(game_id);
 

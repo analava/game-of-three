@@ -5,3 +5,7 @@ exports.createPlayer = async(player) => {
     const newPlayer = new Player(player);
     return await newPlayer.save();
 }
+
+exports.findById = async(id) => {
+    return await Player.findById(id);
+}
