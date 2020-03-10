@@ -1,27 +1,47 @@
+const mongoose = require('mongoose');
 const Game = require('./game.model');
 const playerController = require('../player/player.controller');
 const { random, choiceRange } = require('../../utils/random');
+const redisClient = require('../../config/redis');
 
 exports.startGame = async(gameKind, playerName, initial_number, nextPlayer, goal) => {
-    const players = [];
-    let addedPlayers = await createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer);
-    addedPlayers.map((item) => {
-        players.push(item._id);
-    });
-    let game = new Game({
-        kind: gameKind,
-        players: players,
-        nextPlayer: players[1],
-        currentNumber: initial_number ? initial_number : random(),
-        ...(goal && { goal: goal }),
-    });
-    return await game.save();
+        const players = [];
+        let addedPlayers = await createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer);
+        addedPlayers.map((item) => {
+            players.push(item._id);
+        });
+        let game = new Game({
+            kind: gameKind,
+            players: players,
+            nextPlayer: players[1],
+            currentNumber: initial_number ? initial_number : random(),
+            ...(goal && { goal: goal }),
+        });
+        await game.save();
+
+        await redisClient.set(game._id.toString(), JSON.stringify([{ log: `Game started by ${addedPlayers[0].name ? addedPlayers[0].name: `NO_NAME_${addedPlayers[0]._id}`} with number ${game.currentNumber}`,data:{currentNumber: game.currentNumber}}]));
+        
+        const gameInfo = {
+            game: game._id,
+            player: players[0],
+            nextPlayer: players[1]};
+        
+        if (addedPlayers[1].kind == 'MACHINE') {
+        const {moves, logs} = await this.handleTurnAndDoTheMove(game._id, game.nextPlayer);
+        return Object.assign(gameInfo,{
+            logs,
+            moves
+        });
+    }
+    else{
+       const {moves, logs} = await this.getGame(game._id);
+       return Object.assign(gameInfo,{logs,moves})
+    }
+    
 };
 
-
-
 exports.handleTurnAndDoTheMove = async(game_id, player_id, moveNumber) => {
-
+    
     const game = await Game.aggregate([{
             $match: { _id: mongoose.Types.ObjectId(game_id) }
         },
@@ -35,7 +55,7 @@ exports.handleTurnAndDoTheMove = async(game_id, player_id, moveNumber) => {
         },
         { $unwind: { path: '$nextPlayer' } }
     ]);
-
+    
     if (game[0].nextPlayer._id.toString() != player_id.toString()) {
         throw new Error('Invalid turn');
     } else {
@@ -47,13 +67,19 @@ exports.handleTurnAndDoTheMove = async(game_id, player_id, moveNumber) => {
             });
         }
         const movedGame = await this.move(game_id, player_id, moveNumber);
-
+        const message = `"${game[0].nextPlayer.name ? game[0].nextPlayer.name :`NO_NAME_${player_id}`}" moved. moved by: ${moveNumber}, resulting number: ${movedGame.currentNumber}`;
+        await redisClient.put(game_id, {log: message, data:{ currentNumber:game[0].currentNumber, moveNumber: moveNumber, addedNumber: game[0].currentNumber + moveNumber, resultingNumber:  movedGame.currentNumber}} );
+        if (movedGame.currentNumber == 1) {
+            const message = `"${game[0].nextPlayer.name ? game[0].nextPlayer.name :`NO_NAME_${player_id}`}" is The winner`;
+            await redisClient.put(game_id,{log:message} );
+            return formatResponse(JSON.parse(await redisClient.redisGet(game_id.toString())));
+        }
         // check if nextPlayer is human or machine. if it is machine, call this function with the new player
         const nextPlayer = await playerController.findById(movedGame.nextPlayer);
         if (nextPlayer.kind == 'MACHINE') {
             await this.handleTurnAndDoTheMove(game_id, movedGame.nextPlayer);
         }
-        return;
+        return formatResponse(JSON.parse(await redisClient.redisGet(game_id.toString())));
     }
 }
 
@@ -96,9 +122,9 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
                 ];
             }
             break;
-        case 'MULTI-PLAYER':
+            case 'MULTI-PLAYER':
             {
-
+              
             }
             break;
         case 'AUTOMATIC':
@@ -113,4 +139,14 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
     const addedPlayers = await Promise.all(addPlayers);
 
     return addedPlayers;
+}
+
+async function formatResponse(response){
+    const logs = [];
+    const moves = [];
+    response.map((item)=>{
+        if (item.log) logs.push(item.log);
+        if (item.data) moves.push(item.data);
+    })
+    return {logs, moves}
 }
