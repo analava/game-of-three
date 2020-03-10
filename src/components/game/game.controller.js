@@ -144,7 +144,9 @@ async function createPlayersBasedOnGameKind(gameKind, playerName, nextPlayer) {
             break;
     }
     const addedPlayers = await Promise.all(addPlayers);
-
+    if(!addedPlayers[1]){
+        throw new Error('The player does not exist!');
+    }
     return addedPlayers;
 }
 
